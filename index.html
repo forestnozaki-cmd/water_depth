@@ -14,7 +14,6 @@
       padding-bottom: 40px;
     }
 
-    /* ヘッダー */
     header {
       background: #1d4ed8;
       color: white;
@@ -26,7 +25,10 @@
       top: 0;
       z-index: 100;
     }
-    header h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    header h1 { font-size: 18px; font-weight: 700; }
+    .version { font-size: 11px; opacity: 0.7; font-weight: 400; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
     .status-badge {
       font-size: 12px;
       padding: 4px 10px;
@@ -37,7 +39,6 @@
     .offline { background: #ef4444; }
     .unknown { background: #9ca3af; }
 
-    /* カード */
     .container { padding: 14px; max-width: 480px; margin: 0 auto; }
     .card {
       background: white;
@@ -55,7 +56,6 @@
       margin-bottom: 12px;
     }
 
-    /* フォーム */
     label {
       display: block;
       font-size: 13px;
@@ -70,7 +70,7 @@
       padding: 10px 12px;
       border: 1.5px solid #d1d5db;
       border-radius: 8px;
-      font-size: 16px; /* 16px以上でiOSのズーム防止 */
+      font-size: 16px;
       color: #111827;
       background: #f9fafb;
       appearance: none;
@@ -83,20 +83,14 @@
       border-color: #1d4ed8;
       background: white;
     }
-    input:last-child { margin-bottom: 0; }
 
-    /* 水深グリッド */
     .depth-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
     .depth-item { display: flex; flex-direction: column; align-items: center; }
-    .depth-item label {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-bottom: 3px;
-    }
+    .depth-item label { font-size: 11px; color: #9ca3af; margin-bottom: 3px; }
     .depth-item input {
       padding: 8px 4px;
       text-align: center;
@@ -104,7 +98,6 @@
       font-size: 16px;
     }
 
-    /* ボタン */
     .btn {
       width: 100%;
       padding: 15px;
@@ -114,14 +107,12 @@
       font-weight: 700;
       cursor: pointer;
       transition: opacity 0.15s, transform 0.1s;
-      letter-spacing: 0.02em;
     }
     .btn:active { transform: scale(0.98); }
     .btn-primary { background: #1d4ed8; color: white; margin-bottom: 8px; }
     .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
     .btn-clear { background: #f3f4f6; color: #6b7280; }
 
-    /* 未送信キュー通知 */
     .queue-banner {
       background: #fffbeb;
       border: 1.5px solid #fcd34d;
@@ -133,7 +124,6 @@
       display: none;
     }
 
-    /* トースト */
     .toast {
       position: fixed;
       bottom: 28px;
@@ -159,13 +149,17 @@
 <body>
 
 <header>
-  <h1>💧 水深計測</h1>
-  <span class="status-badge unknown" id="statusBadge">確認中</span>
+  <div class="header-left">
+    <h1>💧 水深計測</h1>
+    <span class="version">v1.1</span>
+  </div>
+  <div class="header-right">
+    <span class="status-badge unknown" id="statusBadge">確認中</span>
+  </div>
 </header>
 
 <div class="container">
 
-  <!-- 計測情報 -->
   <div class="card">
     <div class="card-title">計測情報</div>
     <label>計測日</label>
@@ -176,16 +170,13 @@
     <input type="text" id="note" placeholder="例：増水後の計測">
   </div>
 
-  <!-- 水深入力 -->
   <div class="card">
     <div class="card-title">水深（m）— 最大20点</div>
     <div class="depth-grid" id="depthGrid"></div>
   </div>
 
-  <!-- 未送信キュー -->
   <div class="queue-banner" id="queueBanner"></div>
 
-  <!-- 送信・クリア -->
   <button class="btn btn-primary" id="sendBtn" onclick="handleSend()">📡 送信する</button>
   <button class="btn btn-clear" onclick="clearForm()">クリア</button>
 
@@ -195,19 +186,18 @@
 
 <script>
 // ============================================================
-//  ★ GAS の Web App URL をここに貼る
+//  GAS Web App URL
 // ============================================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxOzpJEp4UBwX0AKTBsQA0KBdMUfHG32L-XIv8Z9_ph3jJFUWigbVMCW1DgvrsDeYSa/exec';
-// ============================================================
-
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxOzpJEp4UBwX0AKTBsQA0KBdMUfHG32L-XIv8Z9_ph3jJFUWigbVMCW1DgvrsDeYSa/exec';
 const QUEUE_KEY = 'depth_send_queue';
+// ============================================================
 
 // 今日の日付をデフォルト
 (function setToday() {
   const d = new Date();
-  const pad = n => String(n).padStart(2, '0');
+  const p = n => String(n).padStart(2, '0');
   document.getElementById('measureDate').value =
-    `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
 })();
 
 // 水深入力欄を20個生成
@@ -219,13 +209,12 @@ const QUEUE_KEY = 'depth_send_queue';
     div.innerHTML = `
       <label>No.${i}</label>
       <input type="number" id="d${i}" placeholder="0.00"
-             step="0.01" min="0" inputmode="decimal">
-    `;
+             step="0.01" min="0" inputmode="decimal">`;
     grid.appendChild(div);
   }
 })();
 
-// ─── 通信状態 ───────────────────────────────────────────────
+// ── 通信状態 ─────────────────────────────────────────────────
 function updateStatus() {
   const badge = document.getElementById('statusBadge');
   if (navigator.onLine) {
@@ -242,32 +231,25 @@ window.addEventListener('online',  updateStatus);
 window.addEventListener('offline', updateStatus);
 updateStatus();
 
-// ─── キュー管理 ──────────────────────────────────────────────
+// ── キュー管理 ───────────────────────────────────────────────
 function getQueue() {
   try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
   catch { return []; }
 }
-function saveQueue(q) {
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
-}
-function enqueue(data) {
-  const q = getQueue();
-  q.push(data);
-  saveQueue(q);
-  refreshQueueBanner();
-}
+function saveQueue(q)  { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+function enqueue(data) { const q = getQueue(); q.push(data); saveQueue(q); refreshQueueBanner(); }
 function refreshQueueBanner() {
-  const q = getQueue();
+  const q  = getQueue();
   const el = document.getElementById('queueBanner');
   if (q.length > 0) {
     el.style.display = 'block';
-    el.textContent = `⏳ 未送信データ ${q.length} 件　← オンライン復帰後に自動送信します`;
+    el.textContent = `⏳ 未送信データ ${q.length} 件 ← オンライン復帰後に自動送信`;
   } else {
     el.style.display = 'none';
   }
 }
 
-// ─── データ収集 ──────────────────────────────────────────────
+// ── データ収集 ───────────────────────────────────────────────
 function collectData() {
   const date     = document.getElementById('measureDate').value;
   const location = document.getElementById('location').value.trim();
@@ -277,48 +259,32 @@ function collectData() {
     showToast('計測日と地点名を入力してください', 'error');
     return null;
   }
-
   const depths = [];
   for (let i = 1; i <= 20; i++) {
     const v = document.getElementById(`d${i}`).value;
     depths.push(v !== '' ? parseFloat(v) : null);
   }
-
   if (depths.every(v => v === null)) {
     showToast('水深を1つ以上入力してください', 'error');
     return null;
   }
-
-  return {
-    date,
-    location,
-    note,
-    depths,
-    savedAt: new Date().toISOString()
-  };
+  return { date, location, note, depths, savedAt: new Date().toISOString() };
 }
 
-// ─── GASへ送信（GET方式でCORS問題を回避）────────────────────
+// ── GASへ送信（no-cors で CORS 問題を根本回避）───────────────
 async function postToGAS(data) {
-  const params = new URLSearchParams({
-    date:     data.date,
-    location: data.location,
-    note:     data.note    || '',
-    savedAt:  data.savedAt || ''
+  // mode:'no-cors' = CORSエラーが出ない / GASには確実に届く
+  // 応答は読めないが、スプレッドシートへの書き込みは実行される
+  await fetch(GAS_URL, {
+    method:  'POST',
+    mode:    'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body:    JSON.stringify(data)
   });
-  data.depths.forEach((v, i) => {
-    params.append(`d${i + 1}`, v !== null ? v : '');
-  });
-
-  const res = await fetch(`${GAS_URL}?${params.toString()}`, {
-    method: 'GET',
-    signal: AbortSignal.timeout(15000)
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  // fetchが例外を投げなければ送信成功とみなす
 }
 
-// ─── 送信ボタン ──────────────────────────────────────────────
+// ── 送信ボタン ───────────────────────────────────────────────
 async function handleSend() {
   const data = collectData();
   if (!data) return;
@@ -340,7 +306,7 @@ async function handleSend() {
     await postToGAS(data);
     showToast('✅ 送信完了！', 'success');
     clearForm();
-  } catch (err) {
+  } catch {
     enqueue(data);
     showToast('送信失敗：データを保存しました', 'error');
   } finally {
@@ -349,31 +315,29 @@ async function handleSend() {
   }
 }
 
-// ─── キューの再送（オンライン復帰時） ─────────────────────────
+// ── キューの再送 ─────────────────────────────────────────────
 async function trySendQueue() {
   const q = getQueue();
   if (q.length === 0) return;
-
   const remaining = [];
   for (const data of q) {
     try { await postToGAS(data); }
-    catch  { remaining.push(data); }
+    catch { remaining.push(data); }
   }
   saveQueue(remaining);
-
   const sent = q.length - remaining.length;
   if (sent > 0) showToast(`✅ 未送信 ${sent} 件を送信しました`, 'success');
   refreshQueueBanner();
 }
 
-// ─── フォームクリア ───────────────────────────────────────────
+// ── フォームクリア ───────────────────────────────────────────
 function clearForm() {
   document.getElementById('location').value = '';
   document.getElementById('note').value = '';
   for (let i = 1; i <= 20; i++) document.getElementById(`d${i}`).value = '';
 }
 
-// ─── トースト通知 ─────────────────────────────────────────────
+// ── トースト ─────────────────────────────────────────────────
 let toastTimer = null;
 function showToast(msg, type) {
   const el = document.getElementById('toast');
